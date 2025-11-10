@@ -1,0 +1,51 @@
+// 파일: EntityBase.cs
+using UnityEngine;
+
+public enum EntityType { PLAYER, ENEMY, NPC }
+
+public abstract class EntityBase : MonoBehaviour
+{
+    [Header("기본 스탯 (인스펙터에서 설정)")]
+    [SerializeField] private int maxHealth = 100;
+    [SerializeField] private int maxMana = 50;
+    [SerializeField] private float initMoveSpeed = 0f;
+    [SerializeField] private EntityType entityType;
+
+    // 현재 상태는 외부에서 읽을 수만 있도록 프로퍼티로 보호 (캡슐화)
+    public int Health { get; protected set; }
+    public int Mana { get; protected set; }
+    public float MoveSpeed { get; protected set; }
+    // protected set: 나 자신과 나를 상속받은 자식 클래스만 값을 수정할 수 있음
+
+    // 생성자 대신 Awake 사용, 자식에서 재정의할 수 있도록 virtual 키워드 추가
+    protected virtual void Awake()
+    {
+        Health = maxHealth;
+        Mana = maxMana;
+        MoveSpeed = initMoveSpeed;
+    }
+
+    // 자식 클래스가 반드시 자신만의 방식으로 구현해야 할 행동들
+    public abstract void Move(Vector2 direction);
+    public abstract void Attack(EntityBase target);
+    public abstract void Die();
+
+    // 기본 로직이 있는 공통 기능들 (필요시 자식이 override하여 수정 가능)
+    public virtual void TakeDamage(int damage)
+    {
+        Health -= damage;
+        if (Health <= 0)
+        {
+            Health = 0;
+            Die();
+        }
+    }
+    public virtual void Heal(int amount)
+    {
+        Health += amount;
+        if (Health > maxHealth)
+        {
+            Health = maxHealth;
+        }
+    }
+}

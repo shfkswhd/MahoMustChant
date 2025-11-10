@@ -1,0 +1,229 @@
+// 파일: AIEntity.cs
+using UnityEngine;
+using System.Collections.Generic; // List 등을 사용하기 위해 추가
+
+public abstract class AIEntity : EntityBase
+{
+    private IState currentState;
+    private Vector2 wanderDirection = Vector2.zero;
+    
+    [Header("AI 설정")] // 인스펙터 창에서 보기 좋게 그룹화
+    [SerializeField] private float perceptionRadius = 10f; // 인식 반경
+    [Header("배회(Wander)를 위한 Raycast 설정")]
+    [SerializeField] private float wallCheckDistance = 0.5f; // 벽을 감지할 거리
+    [SerializeField] private LayerMask groundLayer; // 지형(벽, 바닥)으로 인식할 레이어
+    [SerializeField] private LayerMask entityLayer; // 인식할 엔티티 레이어
+
+    [Header("장애물 회피 설정")]
+    [SerializeField] private float avoidanceRayLength = 2.0f; // 더듬이 길이
+    [SerializeField] private float avoidanceForce = 1.0f;   // 방향을 트는 힘
+
+    // 탐지 관련 변수들 위에나 아래에 추가
+    [SerializeField] private float detectionInterval = 0.5f; // 탐지 주기
+    private float detectionTimer; // 다음 탐지까지 남은 시간을 재는 타이머
+
+    protected virtual void Start()
+    {
+        ChangeState(new WanderState());
+    }
+    protected override void Awake()
+    {
+        base.Awake();
+        wanderDirection = Random.value > 0.5f ? Vector2.right : Vector2.left;
+        //시간 초기화
+        detectionTimer = detectionInterval;
+    }
+    private void Update()
+    {
+        // 1. 기존에 있던 상태 업데이트 호출
+        currentState?.OnUpdate();
+
+        // 2. 아래 타이머 로직 전체를 추가합니다.
+        detectionTimer -= Time.deltaTime;
+        if (detectionTimer <= 0f)
+        {
+            DetectNearbyEntities(); // 핵심: 여기서 탐지 함수를 호출
+            detectionTimer = detectionInterval; // 타이머 리셋
+        }
+    }
+    private void OnCollisionEnter2D(Collision2D collision)
+    {
+        // 1. 부딪힌 상대방이 누구인지 확인합니다.
+        EntityBase otherEntity = collision.gameObject.GetComponent<EntityBase>();
+
+        // 2. 부딪힌 상대가 엔티티가 아니면 (벽이나 바닥이면) 무시합니다.
+        if (otherEntity == null)
+        {
+            return;
+        }
+
+        // 3. 부딪힌 상대가 나의 '먹이'인지 확인합니다.
+        if (IsPrey(otherEntity))
+        {
+            // 4. 나의 먹이가 맞다면, Attack 메서드를 호출하여 처리합니다.
+            Attack(otherEntity);
+        }
+    }
+
+    protected abstract bool IsPredator(EntityBase entity);
+    protected abstract bool IsPrey(EntityBase entity);
+
+    private Transform FindClosest(List<Transform> targets)
+    {
+        // targets 리스트가 비어있을 경우를 대비한 안전장치
+        if (targets == null || targets.Count == 0)
+        {
+            return null;
+        }
+    
+        Transform closest = null;
+        float minDistance = float.MaxValue;
+    
+        foreach (Transform target in targets)
+        {
+            // 대상이 유효한지(파괴되지 않았는지 등) 확인하는 습관도 좋습니다.
+            if (target == null) continue;
+    
+            float distance = Vector2.Distance(transform.position, target.position);
+            if (distance < minDistance)
+            {
+                minDistance = distance;
+                closest = target;
+            }
+        }
+    
+        // 루프가 끝난 후, 찾아낸 가장 가까운 대상을 반환합니다.
+        return closest;
+    }
+
+    public void ChangeState(IState newState)
+    {
+        // 1. [OnExit] 기존 상태가 있다면, 마무리 작업을 하도록 알려줍니다.
+        // 'currentState?'는 currentState가 null이 아닐 경우에만 OnExit()을 호출하는 안전한 문법입니다.
+        currentState?.OnExit();
+
+        // 2. [Change] 이제 AI의 현재 상태를 새로운 상태로 교체합니다.
+        currentState = newState;
+
+        // 3. [OnEnter] 새로운 상태에게, 초기화 작업을 하도록 알려줍니다.
+        // 'this'는 "이 스크립트(AIEntity) 자체"를 의미하며,
+        // 새로운 상태가 주인이 누구인지 알 수 있게 해줍니다.
+        currentState?.OnEnter(this);
+    }
+
+    private void DetectNearbyEntities()
+    {
+        Collider2D[] colliders = Physics2D.OverlapCircleAll(transform.position, perceptionRadius, entityLayer);
+
+        List<Transform> predators = new List<Transform>();
+        List<Transform> preys = new List<Transform>();
+
+        // 1. 먼저 모든 대상을 천적과 먹이로 분류하여 리스트에 담는다.
+        foreach (var col in colliders)
+        {
+            if (IsPredator(col.GetComponent<EntityBase>())) predators.Add(col.transform);
+            if (IsPrey(col.GetComponent<EntityBase>())) preys.Add(col.transform);
+        }
+
+        // 2. 우선순위에 따라 행동을 결정한다.
+        if (predators.Count > 0)
+        {
+            // 천적이 한 명 이상 있다면,
+            Transform closestPredator = FindClosest(predators); // 가장 가까운 천적을 찾는 함수
+            ChangeState(new FleeState(closestPredator));
+        }
+        else if (preys.Count > 0)
+        {
+            // 천적은 없고 먹이가 한 명 이상 있다면,
+            Transform closestPrey = FindClosest(preys); // 가장 가까운 먹이를 찾는 함수
+            ChangeState(new ChaseState(closestPrey));
+        }
+    }
+
+    public virtual void Pursue(Transform target)
+    {
+        // 1. 목표를 향한 기본 방향
+        Vector2 desiredDirection = (target.position - transform.position).normalized;
+
+        // 2. 장애물 회피를 위한 방향 보정
+        Vector2 avoidanceDirection = Vector2.zero;
+
+        // 정면으로 쏘는 더듬이
+        RaycastHit2D hit = Physics2D.Raycast(transform.position, desiredDirection, avoidanceRayLength, groundLayer);
+
+        if (hit.collider != null)
+        {
+            // 목표 방향과 미끄러질 방향 중 어느 쪽이 더 가까운지 판단하여 방향을 정함
+            // (이 부분은 조금 더 복잡한 계산이 필요할 수 있습니다)
+            // 간단하게는 그냥 법선 방향으로 힘을 더해줍니다.
+            avoidanceDirection = hit.normal * avoidanceForce;
+        }
+
+        // 3. 최종 방향 결정: 목표 방향 + 회피 방향
+        Vector2 finalDirection = (desiredDirection + avoidanceDirection).normalized;
+
+        // 4. 최종적으로 결정된 '똑똑한' 방향으로 이동
+        Move(finalDirection);
+    }
+
+    public virtual void Evade(Transform predator)
+    {
+        // 도망 로직 구현
+        Debug.Log($"{name}이(가) {predator.name}로부터 도망갑니다.");
+        // 내가 가야할 방향(도망) 계산
+        Vector2 direction = (transform.position - predator.position).normalized;
+        // 그 방향으로 이동
+        Move(direction);
+    }
+
+#if UNITY_EDITOR
+    private void OnDrawGizmosSelected()
+    {
+        // 현재 상태가 ChaseState인지 확인하고, 형 변환
+        if (currentState is ChaseState chaseState) 
+        {
+            // chaseState가 가지고 있는 실제 target 정보를 가져옴
+            Transform target = chaseState.Target; // GetTarget()은 ChaseState에 만들어야 함
+            if (target != null)
+            {
+                Gizmos.color = Color.red;
+                Gizmos.DrawLine(transform.position, target.position);
+            }
+        }
+        else if(currentState is FleeState fleeState)
+        {
+            Transform predator = fleeState.Predator; // GetPredator()는 FleeState에 만들어야 함
+            if (predator != null)
+            {
+                Gizmos.color = Color.blue;
+                Gizmos.DrawLine(transform.position, predator.position);
+            }
+        }else{
+            // 1. 인식 반경을 녹색으로
+            Gizmos.color = Color.yellow;
+        }
+        Gizmos.DrawWireSphere(transform.position, perceptionRadius);
+
+        // --- 배회(Wander) 상태일 때만 그리기 ---
+        if (currentState is WanderState)
+        {
+            // 2. 벽 감지 Raycast ('앞 더듬이')를 빨간색 선으로 그립니다
+            Gizmos.color = Color.red;
+            Gizmos.DrawLine(transform.position, (Vector2)transform.position + wanderDirection * wallCheckDistance);
+
+            // 3. 절벽 감지 Raycast ('아래 더듬이')를 파란색 선으로 그립니다
+            Gizmos.color = Color.blue;
+            Vector2 frontFootPosition = (Vector2)transform.position + wanderDirection * 0.5f;
+            Gizmos.DrawLine(frontFootPosition, frontFootPosition + Vector2.down * 1f); // 1f는 Wander()의 Ray 길이와 일치
+        }
+
+        // 4. 현재 상태의 이름을 AI 머리 위에 텍스트로 표시합니다.
+        if (currentState != null)
+        {
+            UnityEditor.Handles.color = Color.white;
+            UnityEditor.Handles.Label(transform.position + Vector3.up * 1.5f, currentState.GetType().Name);
+        }
+    }
+#endif
+
+}

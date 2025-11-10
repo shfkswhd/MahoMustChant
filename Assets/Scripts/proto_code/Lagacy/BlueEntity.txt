@@ -1,0 +1,33 @@
+using UnityEngine;
+// 파일: GreenEntity.cs
+public class BlueEntity : AIEntity
+{
+    protected override bool IsPredator(EntityBase entity)
+    {
+        // 파랑 개체의 천적은 '보라색 개체'
+        return entity is PurpleEntity;
+    }
+
+    protected override bool IsPrey(EntityBase entity)
+    {
+        // 파랑 개체의 먹이는 '초록색 개체'
+        return entity is GreenEntity;
+    }
+    
+    // Move, Attack, Die 등의 나머지 추상 메서드도 구현 필요...
+    public override void Attack(EntityBase target)
+    {
+        Debug.Log($"{name}이(가) {target.GetType().Name}을(를) 공격!");
+        Destroy(target.gameObject);
+    }
+    public override void Die()
+    {
+        Debug.Log($"{name}이(가) 사망했습니다.");
+        Destroy(gameObject);
+    }
+
+    public override void Move(Vector2 direction)
+    {
+        transform.Translate(direction.normalized * MoveSpeed * Time.deltaTime);
+    }
+}

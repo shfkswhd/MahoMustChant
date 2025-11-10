@@ -1,0 +1,64 @@
+using UnityEngine;
+using System.Collections.Generic; // List를 사용하기 위해 필요합니다.
+
+public class EntityManager : MonoBehaviour
+{
+    // 필드===========================================
+    [Header("스폰할 프리팹 목록")]
+    public List<GameObject> entityPrefabs; // 여기에 Green, Blue, Purple 프리팹을 끌어다 놓을 겁니다.
+
+    [Header("스폰 설정")]
+    public float spawnInterval = 5.0f; // 몇 초마다 스폰할지 (2초)
+    public float spawnAreaWidth = 20f; // 스폰될 구역의 너비
+    public float spawnAreaHeight = 10f; // 스폰될 구역의 높이
+    public int maxEntityCount = 50; // 씬에 엔티티가 너무 많아지는 것을 방지
+
+    private float spawnTimer; // 다음 스폰까지 남은 시간을 재는 타이머
+
+    // 메소드=========================================
+    void Start()
+    {
+        // 게임이 시작되면, 첫 스폰을 위해 타이머를 0으로 설정
+        spawnTimer = 0f;
+    }
+
+    void Update()
+    {
+        // 1. 타이머를 계속 감소시킵니다. (Time.deltaTime은 1프레임의 시간)
+        spawnTimer -= Time.deltaTime;
+
+        // 2. 타이머가 0 이하로 내려갔다면, 스폰할 시간이 되었다는 뜻!
+        if (spawnTimer <= 0)
+        {
+            // 3. 엔티티를 스폰합니다.
+            SpawnRandomEntity();
+
+            // 4. 다음 스폰을 위해 타이머를 다시 리셋합니다.
+            spawnTimer = spawnInterval;
+        }
+    }
+
+    void SpawnRandomEntity()
+    {
+        // 만약 씬의 엔티티 수가 최대치를 넘으면, 더 이상 스폰하지 않고 종료
+        int currentEntityCount = FindObjectsByType<EntityBase>(FindObjectsSortMode.None).Length;
+        if (currentEntityCount >= maxEntityCount)
+        {
+            return; // 이 함수를 즉시 종료
+        }
+
+        // 1. 어떤 엔티티를 스폰할지 무작위로 고릅니다.
+        int randomIndex = Random.Range(0, entityPrefabs.Count);
+        GameObject prefabToSpawn = entityPrefabs[randomIndex];
+
+        // 2. 어디에 스폰할지 무작위 위치를 정합니다.
+        float randomX = Random.Range(-spawnAreaWidth / 2, spawnAreaWidth / 2);
+        float randomY = Random.Range(-spawnAreaHeight / 2, spawnAreaHeight / 2);
+        Vector2 spawnPosition = new Vector2(randomX, randomY);
+
+        // 3. 드디어 생성! Instantiate(무엇을, 어디에, 어떤 회전으로)
+        Instantiate(prefabToSpawn, spawnPosition, Quaternion.identity);
+
+        Debug.Log($"{prefabToSpawn.name}이(가) {spawnPosition} 위치에 스폰되었습니다.");
+    }
+}

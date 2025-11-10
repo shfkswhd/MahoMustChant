@@ -1,0 +1,48 @@
+using UnityEngine;
+using UnityEngine.InputSystem;
+
+public class Player : EntityBase
+{
+    private Rigidbody2D rb;
+    private PlayerControlManager playerActions;
+    private Vector2 moveInput;
+
+    protected override void Awake()
+    {
+        base.Awake();
+        rb = GetComponent<Rigidbody2D>();
+        playerActions = new PlayerControlManager();
+    }
+    private void OnEnable()
+    {
+        playerActions.Player.Enable();
+    }
+    private void OnDisable()
+    {
+        playerActions.Player.Disable();
+    }
+    void Update()
+    {
+        moveInput = playerActions.Player.Move.ReadValue<Vector2>();
+    }
+    void FixedUpdate()
+    {
+        Move(moveInput);
+    }
+    public override void Move(Vector2 direction)
+    {
+        // 기본 Rigidbody2D에서는 MovePosition이 충돌 처리에 있어
+        // 가장 안정적인 방식 중 하나입니다.
+        Vector2 newPosition = rb.position + direction * MoveSpeed * Time.fixedDeltaTime;
+        rb.MovePosition(newPosition);
+    }
+    public override void Attack(EntityBase target)
+    {
+        Debug.Log("Player attacks!");
+    }
+    public override void Die()
+    {
+        Debug.Log("Player has died.");
+        gameObject.SetActive(false);
+    }
+}
