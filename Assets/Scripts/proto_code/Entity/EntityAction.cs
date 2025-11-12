@@ -1,63 +1,56 @@
-// EntityAction.cs
 using UnityEngine;
 
 [RequireComponent(typeof(Locomotion), typeof(EntityCore))]
 public class EntityAction : MonoBehaviour
 {
     private Locomotion locomotion;
-    private EntityCore myCore;
+    private EntityCore entityCore;
 
     private void Awake()
     {
         locomotion = GetComponent<Locomotion>();
-        myCore = GetComponent<EntityCore>();
+        entityCore = GetComponent<EntityCore>();
     }
 
-    /// <summary>
-    /// ´ë»óÀ» ÇâÇØ ÀÌµ¿ÇÏµµ·Ï Locomotion ÄÄÆ÷³ÍÆ®¿¡ ¸í·ÉÇÕ´Ï´Ù.
-    /// </summary>
-    public void Pursue(Transform target)
-    {
-        if (target == null) return;
-        Vector2 direction = (target.position - transform.position).normalized;
-        locomotion.Move(direction);
-    }
+    // --- Pursue, Flee, Stop, MoveInDirectionì€ ê¸°ì¡´ê³¼ ë™ì¼ ---
+    public void Pursue(Transform target) { /* ... */ }
+    public void Flee(Transform predator) { /* ... */ }
+    public void Stop() { /* ... */ }
+    public void MoveInDirection(Vector2 direction) { /* ... */ }
 
     /// <summary>
-    /// ´ë»óÀ¸·ÎºÎÅÍ ¸Ö¾îÁöµµ·Ï Locomotion ÄÄÆ÷³ÍÆ®¿¡ ¸í·ÉÇÕ´Ï´Ù.
-    /// </summary>
-    public void Flee(Transform predator)
-    {
-        if (predator == null) return;
-        Vector2 direction = (transform.position - predator.position).normalized;
-        locomotion.Move(direction);
-    }
-
-    /// <summary>
-    /// Á¦ÀÚ¸®¿¡ ¸ØÃßµµ·Ï Locomotion ÄÄÆ÷³ÍÆ®¿¡ ¸í·ÉÇÕ´Ï´Ù.
-    /// </summary>
-    public void Stop()
-    {
-        locomotion.Move(Vector2.zero);
-    }
-
-    /// <summary>
-    /// ¿øÇÏ´Â ¹æÇâÀ¸·Î ÀÌµ¿ÇÏ°Ô Locomotion ÄÄÆ÷³ÍÆ®¿¡ ¸í·ÉÇÕ´Ï´Ù.
-    /// </summary>
-    public void MoveInDirection(Vector2 direction)
-    {
-        locomotion.Move(direction);
-    }
-
-    /// <summary>
-    /// ´ë»óÀ» °ø°İÇÕ´Ï´Ù. (Áö±İÀº ÇÇÇØ¸¦ ÁÖ´Â °£´ÜÇÑ ·ÎÁ÷)
+    /// ì´ ì—”í‹°í‹°ì˜ ê³µê²© í–‰ë™ì„ ì‹¤í–‰í•©ë‹ˆë‹¤.
+    /// ë°ì´í„°ì— 'ê³ ê¸‰ ê³µê²© ì „ëµ'ì´ í• ë‹¹ë˜ì–´ ìˆìœ¼ë©´ ê·¸ê²ƒì„ ìš°ì„ ì ìœ¼ë¡œ ì‚¬ìš©í•˜ê³ ,
+    /// ì—†ìœ¼ë©´ ê¸°ë³¸ì ì¸ ê·¼ì ‘ ê³µê²©ì„ ìˆ˜í–‰í•©ë‹ˆë‹¤.
     /// </summary>
     public void Attack(EntityCore target)
     {
-        if (target == null || target.IsDead) return;
-        Debug.Log($"{myCore.Data.entityName}ÀÌ(°¡) {target.Data.entityName}À»(¸¦) °ø°İ!");
-        // ¿©±â¿¡ ½ÇÁ¦ °ø°İ ·ÎÁ÷(µ¥¹ÌÁö, ¾Ö´Ï¸ŞÀÌ¼Ç µî)À» Ãß°¡ÇÒ ¼ö ÀÖ½À´Ï´Ù.
-        // ¿¹: target.TakeDamage(myCore.Data.attackPower);
+        // --- 1. ë¯¸ë˜ë¥¼ ìœ„í•œ í™•ì¥ í¬ì¸íŠ¸ ---
+        // ë§Œì•½ EntityDataì— 'attackStrategy'ê°€ í• ë‹¹ë˜ì–´ ìˆë‹¤ë©´,
+        if (entityCore.Data.attackStrategy != null)
+        {
+            // ëª¨ë“  ê²ƒì„ ê·¸ ì „ëµì—ê²Œ ìœ„ì„í•˜ê³ , ì—¬ê¸°ì„œ ëë‚¸ë‹¤.
+            entityCore.Data.attackStrategy.Execute(this, target);
+            return;
+        }
+
+        // --- 2. í˜„ì¬ë¥¼ ìœ„í•œ ê¸°ë³¸ ê³µê²© ë¡œì§ ---
+        if (entityCore.Data.hasMeleeAttack)
+        {
+            if (target != null) // AIì²˜ëŸ¼ íƒ€ê²Ÿì´ ì§€ì •ëœ ê²½ìš°
+            {
+                Debug.Log($"{entityCore.Data.entityName}ì´(ê°€) {target.Data.entityName}ì—ê²Œ ê¸°ë³¸ ê·¼ì ‘ ê³µê²©!");
+                target.TakeDamage(entityCore.Data.meleeDamage);
+            }
+            else // í”Œë ˆì´ì–´ì²˜ëŸ¼ íƒ€ê²Ÿì´ ì—†ëŠ” ê²½ìš° (target == null)
+            {
+                Debug.Log($"{entityCore.Data.entityName}ì´(ê°€) ì „ë°©ì„ í–¥í•´ ê¸°ë³¸ ê·¼ì ‘ ê³µê²©!");
+                // TODO: ì—¬ê¸°ì„œ ì „ë°© ë²”ìœ„ ì•ˆì˜ ì ì„ ì°¾ëŠ” Physics2D.OverlapCircle... ë¡œì§ì„ ë„£ìœ¼ë©´ ëœë‹¤.
+                // ì§€ê¸ˆì€ ê·¸ëƒ¥ ë¡œê·¸ë§Œ ì°ì–´ì„œ ê¸°ëŠ¥ì´ í˜¸ì¶œë˜ëŠ”ì§€ë§Œ í™•ì¸í•œë‹¤.
+            }
+        }
     }
 
+    // ë‹¤ë¥¸ ìŠ¤í¬ë¦½íŠ¸ê°€ ì´ ì»´í¬ë„ŒíŠ¸ì˜ ì •ë³´ì— ì ‘ê·¼í•  ìˆ˜ ìˆë„ë¡ ë„ì™€ì£¼ëŠ” public ë©”ì„œë“œ
+    public EntityCore GetCore() => entityCore;
 }

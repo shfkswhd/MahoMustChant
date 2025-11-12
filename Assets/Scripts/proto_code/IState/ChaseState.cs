@@ -16,16 +16,31 @@ public class ChaseState : IState
         }
     }
 
-    public void OnUpdate()
+    // ChaseState.cs의 OnTick() 메서드
+    
+    public void OnTick()
     {
-        if (target == null)
+        if (target == null || !target.gameObject.activeInHierarchy)
         {
-            // 먹이를 놓쳤으면, 지휘관을 통해 상태 전환 요청
-            // brain.ChangeState(new WanderState()); // WanderState를 새로 만들고 나면 주석 해제
+            brain.ChangeState(new WanderState());
             return;
         }
-
-        // 행동 전문가(Action)에게 "저 타겟을 추격해줘" 라고 요청
+    
+        // 목표물과의 거리를 틱마다 계산합니다.
+        float distanceToTarget = Vector2.Distance(brain.transform.position, target.position);
+        float attackRange = brain.Core.Data.meleeRange;
+    
+        // --- 상태 전환 판단 ---
+        // 거리가 공격 사거리 안으로 들어왔다면,
+        if (distanceToTarget <= attackRange)
+        {
+            // Brain에게 "AttackState"로 변경해달라고 요청합니다.
+            // 이때, 누구를 공격할지(target) 정보를 넘겨줍니다.
+            brain.ChangeState(new AttackState(target.GetComponent<EntityCore>()));
+            return; // 상태가 변경되었으므로 추격 행동은 하지 않습니다.
+        }
+    
+        // 아직 공격 범위 밖이라면, 계속 추격합니다.
         brain.Action.Pursue(target);
     }
 

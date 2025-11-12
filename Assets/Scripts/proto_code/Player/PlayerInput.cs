@@ -4,15 +4,15 @@ using System;
 
 public class PlayerInput : MonoBehaviour
 {
-    // Input Action Editor¿¡¼­ »ı¼ºÇÑ Å¬·¡½º (»ç¿ëÀÚ ÀÌ¸§ ¹İ¿µ)
+    // Input Action Editorì—ì„œ ìƒì„±í•œ í´ë˜ìŠ¤ (ì‚¬ìš©ì ì´ë¦„ ë°˜ì˜)
     private PlayerKeysetting playerkeysetting;
 
-    // --- 1. Áö¼ÓÀûÀÎ °ª (CCTV ¹æ½Ä) ---
-    public float MoveInputX { get; private set; } // ¼öÆò ÀÌµ¿ °ª (-1, 0, 1)
-    public bool IsCrouching { get; private set; } // ¼ö±×¸®±â Å°¸¦ ´©¸£°í ÀÖ´ÂÁö ¿©ºÎ
-    public bool IsWalking { get; private set; }   // °È±â(½¬ÇÁÆ®) Å°¸¦ ´©¸£°í ÀÖ´ÂÁö ¿©ºÎ
+    // --- 1. ì§€ì†ì ì¸ ê°’ (CCTV ë°©ì‹) ---
+    public float MoveInputX { get; private set; } // ìˆ˜í‰ ì´ë™ ê°’ (-1, 0, 1)
+    public bool IsCrouching { get; private set; } // ìˆ˜ê·¸ë¦¬ê¸° í‚¤ë¥¼ ëˆ„ë¥´ê³  ìˆëŠ”ì§€ ì—¬ë¶€
+    public bool IsWalking { get; private set; }   // ê±·ê¸°(ì‰¬í”„íŠ¸) í‚¤ë¥¼ ëˆ„ë¥´ê³  ìˆëŠ”ì§€ ì—¬ë¶€
 
-    // --- 2. ´Ü¹ß¼º ÀÌº¥Æ® (ÃÊÀÎÁ¾ ¹æ½Ä) ---
+    // --- 2. ë‹¨ë°œì„± ì´ë²¤íŠ¸ (ì´ˆì¸ì¢… ë°©ì‹) ---
     public event Action OnJumpInput;
     public event Action OnAttackInput;
 
@@ -25,7 +25,7 @@ public class PlayerInput : MonoBehaviour
     {
         playerkeysetting.Player.Enable();
 
-        // ´Ü¹ß¼º ¾×¼Ç ÀÌº¥Æ® ±¸µ¶
+        // ë‹¨ë°œì„± ì•¡ì…˜ ì´ë²¤íŠ¸ êµ¬ë…
         playerkeysetting.Player.Jump.performed += HandleJump;
         playerkeysetting.Player.Attack.performed += HandleAttack;
     }
@@ -39,7 +39,7 @@ public class PlayerInput : MonoBehaviour
 
     private void Update()
     {
-        // Áö¼ÓÀûÀ¸·Î È®ÀÎÇØ¾ß ÇÏ´Â °ªµéÀ» ¸Å ÇÁ·¹ÀÓ °»½Å
+        // ì§€ì†ì ìœ¼ë¡œ í™•ì¸í•´ì•¼ í•˜ëŠ” ê°’ë“¤ì„ ë§¤ í”„ë ˆì„ ê°±ì‹ 
         MoveInputX = playerkeysetting.Player.Move.ReadValue<float>();
         IsCrouching = playerkeysetting.Player.Crouch.IsPressed();
         IsWalking = playerkeysetting.Player.Walk.IsPressed();

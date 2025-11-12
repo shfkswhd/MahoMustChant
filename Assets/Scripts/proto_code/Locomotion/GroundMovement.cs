@@ -1,15 +1,26 @@
+// 파일 이름: GroundMovement.cs
+
 using UnityEngine;
 
-public class GroundMovement : Locomotion
+// 상속 대상을 NonPlayerMovement로 변경합니다.
+public class GroundMovement : NonPlayerMovement
 {
-    // Move 메서드 재정의
-    public override void Move(Vector2 direction)
+    private Vector2 targetMoveDirection;
+
+    public override void SetMoveDirection(Vector2 direction)
     {
-        float BasemoveSpeed = entityCore.Data.moveSpeed;
-        // 지면 이동 로직 구현
-        // 새로운 위치 계산
-        Vector2 newPosition = rb.position + (direction * BasemoveSpeed * Time.fixedDeltaTime);       
-        // 계산된 위치로 리지드바디 이동
-        rb.MovePosition(newPosition);
+        targetMoveDirection = direction;
+    }
+
+    public override void OnTick()
+    {
+        // 부모의 보간 변수를 사용합니다.
+        previousPosition = rb.position;
+
+        float targetSpeed = entityCore.Data.moveSpeed;
+        rb.linearVelocity = new Vector2(targetMoveDirection.x * targetSpeed, rb.linearVelocity.y);
+        
+        // 부모의 보간 변수를 사용합니다.
+        currentPosition = rb.position + rb.linearVelocity * Time.fixedDeltaTime;
     }
 }

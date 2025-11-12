@@ -1,49 +1,50 @@
-// EntityBrain.cs
+// íŒŒì¼ ì´ë¦„: EntityBrain.cs (ìˆ˜ì •)
+
 using UnityEngine;
 
-[RequireComponent(typeof(EntitySense), typeof(EntityAction))]
-public class EntityBrain : MonoBehaviour
+[RequireComponent(typeof(EntitySense), typeof(EntityAction), typeof(EntityCore))]
+public class EntityBrain : MonoBehaviour, ITickable // ITickable êµ¬í˜„
 {
-    // »óÅÂ(State)µéÀÌ ÀÌ BrainÀ» ÅëÇØ ´Ù¸¥ ÄÄÆ÷³ÍÆ®¿¡ ½±°Ô Á¢±ÙÇÒ ¼ö ÀÖµµ·Ï °ø°³
     public EntitySense Sense { get; private set; }
     public EntityAction Action { get; private set; }
     public EntityCore Core { get; private set; }
 
-    // »óÅÂ °ü¸®¿ë º¯¼ö
     private IState currentState;
 
     private void Awake()
     {
-        // ³»°Ô ºÙ¾îÀÖ´Â Àü¹®°¡ ÄÄÆ÷³ÍÆ®µéÀ» Ã£¾Æ¼­ ÀúÀå
         Sense = GetComponent<EntitySense>();
         Action = GetComponent<EntityAction>();
         Core = GetComponent<EntityCore>();
     }
 
-    private void Start()
+    private void OnEnable()
     {
-        // °ÔÀÓÀÌ ½ÃÀÛµÇ¸é ±âº» »óÅÂ(¿¹: ¹èÈ¸ »óÅÂ)·Î ÀüÈ¯
-        // ½ÇÁ¦ °ÔÀÓ¿¡¼­´Â WanderState¸¦ ¸¸µé¾î new WanderState()·Î ±³Ã¼ÇØ¾ß ÇÕ´Ï´Ù.
-        // Áö±İÀº ÀÓ½Ã·Î null »óÅÂ·Î µÓ´Ï´Ù.
-        ChangeState(null); // TODO: new WanderState()·Î ±³Ã¼
+        TickManager.Instance.Register(this); // í‹± ì‹œìŠ¤í…œì— ë“±ë¡
     }
 
-    private void Update()
+    private void Start()
     {
-        // ÇöÀç »óÅÂ°¡ ÀÖ´Ù¸é, ¸Å ÇÁ·¹ÀÓ »óÅÂÀÇ ·ÎÁ÷À» ½ÇÇà
-        currentState?.OnUpdate();
+        // WanderStateë¥¼ ê¸°ë³¸ ìƒíƒœë¡œ ì„¤ì •í•˜ëŠ” ì˜ˆì‹œ
+        ChangeState(new WanderState());
     }
 
     /// <summary>
-    /// AIÀÇ »óÅÂ¸¦ »õ·Î¿î »óÅÂ·Î ¾ÈÀüÇÏ°Ô ÀüÈ¯ÇÕ´Ï´Ù.
+    /// Update() ëŒ€ì‹  TickManagerì— ì˜í•´ ì£¼ê¸°ì ìœ¼ë¡œ í˜¸ì¶œë©ë‹ˆë‹¤.
     /// </summary>
+    public void OnTick()
+    {
+        // í˜„ì¬ ìƒíƒœì˜ í‹± ê¸°ë°˜ ì—…ë°ì´íŠ¸ ë©”ì„œë“œë¥¼ í˜¸ì¶œí•©ë‹ˆë‹¤.
+        currentState?.OnTick();
+    }
+
     public void ChangeState(IState newState)
     {
-        // ±âÁ¸ »óÅÂ°¡ ÀÖ¾ú´Ù¸é, ¸¶¹«¸®(OnExit) Ã³¸®
         currentState?.OnExit();
 
-        // »õ·Î¿î »óÅÂ·Î ±³Ã¼ÇÏ°í, ÃÊ±âÈ­(OnEnter) Ã³¸®
         currentState = newState;
-        currentState?.OnEnter(this); // 'this' (EntityBrain ÀÚ½Å)¸¦ ³Ñ°ÜÁÜ
+
+        // ìƒˆë¡œìš´ ìƒíƒœì— ì§„ì…í•  ë•Œ, ìì‹ (Brain)ì˜ ì°¸ì¡°ë¥¼ ë„˜ê²¨ì¤ë‹ˆë‹¤.
+        currentState?.OnEnter(this);
     }
 }

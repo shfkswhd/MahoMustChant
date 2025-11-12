@@ -4,27 +4,27 @@ using System;
 public class EntityCore : MonoBehaviour
 {
     /// <summary>
-    /// ÀÌ ¿£Æ¼Æ¼ÀÇ ¿øº» µ¥ÀÌÅÍ¸¦ ´ã°í ÀÖ´Â ScriptableObject ÀÔ´Ï´Ù. (ÀÎ½ºÆåÅÍ¿¡¼­ ÇÒ´ç)
+    /// ì´ ì—”í‹°í‹°ì˜ ì›ë³¸ ë°ì´í„°ë¥¼ ë‹´ê³  ìˆëŠ” ScriptableObject ì…ë‹ˆë‹¤. (ì¸ìŠ¤í™í„°ì—ì„œ í• ë‹¹)
     /// </summary>
-    [Tooltip("ÀÌ ¿£Æ¼Æ¼ÀÇ ¿øº» µ¥ÀÌÅÍ¸¦ ´ã°í ÀÖ´Â ScriptableObject")]
+    [Tooltip("ì´ ì—”í‹°í‹°ì˜ ì›ë³¸ ë°ì´í„°ë¥¼ ë‹´ê³  ìˆëŠ” ScriptableObject")]
     [SerializeField] private EntityData data;
-    public EntityData Data => data; // ¿ÜºÎ¿¡¼­´Â ÀĞ±â¸¸ °¡´ÉÇÏµµ·Ï ¼³Á¤
+    public EntityData Data => data; // ì™¸ë¶€ì—ì„œëŠ” ì½ê¸°ë§Œ ê°€ëŠ¥í•˜ë„ë¡ ì„¤ì •
 
     /// <summary>
-    /// ¿£Æ¼Æ¼ÀÇ ÇöÀç Ã¼·ÂÀÔ´Ï´Ù.
+    /// ì—”í‹°í‹°ì˜ í˜„ì¬ ì²´ë ¥ì…ë‹ˆë‹¤.
     /// </summary>
     public float CurrentHealth { get; private set; }
 
     /// <summary>
-    /// ¿£Æ¼Æ¼°¡ »ì¾ÆÀÖ´ÂÁö ¿©ºÎÀÔ´Ï´Ù.
+    /// ì—”í‹°í‹°ê°€ ì‚´ì•„ìˆëŠ”ì§€ ì—¬ë¶€ì…ë‹ˆë‹¤.
     /// </summary>
     public bool IsDead { get; private set; }
 
     // --- Events ---
 
     /// <summary>
-    /// ¿£Æ¼Æ¼°¡ »ç¸ÁÇßÀ» ¶§ È£ÃâµÇ´Â ÀÌº¥Æ®ÀÔ´Ï´Ù.
-    /// UI, °ÔÀÓ ¸Å´ÏÀú, ½ºÆ÷³Ê µîÀÌ ÀÌ ÀÌº¥Æ®¸¦ ±¸µ¶ÇÏ¿© ÈÄ¼Ó Ã³¸®¸¦ ÇÒ ¼ö ÀÖ½À´Ï´Ù.
+    /// ì—”í‹°í‹°ê°€ ì‚¬ë§í–ˆì„ ë•Œ í˜¸ì¶œë˜ëŠ” ì´ë²¤íŠ¸ì…ë‹ˆë‹¤.
+    /// UI, ê²Œì„ ë§¤ë‹ˆì €, ìŠ¤í¬ë„ˆ ë“±ì´ ì´ ì´ë²¤íŠ¸ë¥¼ êµ¬ë…í•˜ì—¬ í›„ì† ì²˜ë¦¬ë¥¼ í•  ìˆ˜ ìˆìŠµë‹ˆë‹¤.
     /// </summary>
     public event Action OnDie;
 
@@ -32,14 +32,14 @@ public class EntityCore : MonoBehaviour
 
     private void Awake()
     {
-        // µ¥ÀÌÅÍ°¡ ÇÒ´çµÇÁö ¾Ê¾ÒÀ» °æ¿ì¸¦ ´ëºñÇÑ ¾ÈÀüÀåÄ¡
+        // ë°ì´í„°ê°€ í• ë‹¹ë˜ì§€ ì•Šì•˜ì„ ê²½ìš°ë¥¼ ëŒ€ë¹„í•œ ì•ˆì „ì¥ì¹˜
         if (data == null)
         {
-            Debug.LogError($"{gameObject.name}ÀÇ EntityCore¿¡ EntityData°¡ ÇÒ´çµÇÁö ¾Ê¾Ò½À´Ï´Ù!", this);
+            Debug.LogError($"{gameObject.name}ì˜ EntityCoreì— EntityDataê°€ í• ë‹¹ë˜ì§€ ì•Šì•˜ìŠµë‹ˆë‹¤!", this);
             return;
         }
 
-        // ÃÊ±âÈ­
+        // ì´ˆê¸°í™”
         CurrentHealth = data.maxHealth;
         IsDead = false;
     }
@@ -47,16 +47,16 @@ public class EntityCore : MonoBehaviour
     // --- Public Methods ---
 
     /// <summary>
-    /// ¿£Æ¼Æ¼¿¡°Ô ÇÇÇØ¸¦ ÀÔÈü´Ï´Ù.
+    /// ì—”í‹°í‹°ì—ê²Œ í”¼í•´ë¥¼ ì…í™ë‹ˆë‹¤.
     /// </summary>
-    /// <param name="damageAmount">ÀÔÈú ÇÇÇØ·®</param>
+    /// <param name="damageAmount">ì…í í”¼í•´ëŸ‰</param>
     public void TakeDamage(float damageAmount)
     {
-        // ÀÌ¹Ì Á×¾ú´Ù¸é ¾Æ¹«°Íµµ ÇÏÁö ¾ÊÀ½
+        // ì´ë¯¸ ì£½ì—ˆë‹¤ë©´ ì•„ë¬´ê²ƒë„ í•˜ì§€ ì•ŠìŒ
         if (IsDead) return;
 
         CurrentHealth -= damageAmount;
-        Debug.Log($"{data.entityName}ÀÌ(°¡) {damageAmount}ÀÇ ÇÇÇØ¸¦ ÀÔ¾ú½À´Ï´Ù. ÇöÀç Ã¼·Â: {CurrentHealth}");
+        Debug.Log($"{data.entityName}ì´(ê°€) {damageAmount}ì˜ í”¼í•´ë¥¼ ì…ì—ˆìŠµë‹ˆë‹¤. í˜„ì¬ ì²´ë ¥: {CurrentHealth}");
 
         if (CurrentHealth <= 0)
         {
@@ -67,23 +67,38 @@ public class EntityCore : MonoBehaviour
     // --- Private Methods ---
 
     /// <summary>
-    /// ¿£Æ¼Æ¼ÀÇ »ç¸Á Ã³¸®¸¦ ´ã´çÇÕ´Ï´Ù.
-    /// ÀÌ ¸Ş¼­µå´Â ¿ÀÁ÷ TakeDamage¸¦ ÅëÇØ¼­¸¸ È£ÃâµÇ¾î¾ß ÇÕ´Ï´Ù.
+    /// ì—”í‹°í‹°ì˜ ì‚¬ë§ ì²˜ë¦¬ë¥¼ ë‹´ë‹¹í•©ë‹ˆë‹¤.
+    /// ì´ ë©”ì„œë“œëŠ” ì˜¤ì§ TakeDamageë¥¼ í†µí•´ì„œë§Œ í˜¸ì¶œë˜ì–´ì•¼ í•©ë‹ˆë‹¤.
     /// </summary>
     private void Die()
     {
-        // Áßº¹ ½ÇÇà ¹æÁö
+        // ì¤‘ë³µ ì‹¤í–‰ ë°©ì§€
         if (IsDead) return;
 
         IsDead = true;
         CurrentHealth = 0;
 
-        Debug.Log($"{data.entityName}ÀÌ(°¡) »ç¸ÁÇß½À´Ï´Ù.");
+        Debug.Log($"{data.entityName}ì´(ê°€) ì‚¬ë§í–ˆìŠµë‹ˆë‹¤.");
 
-        // ³ª¸¦ ±¸µ¶ÇÏ°í ÀÖ´Â ¸ğµç ½Ã½ºÅÛ¿¡°Ô "³ª Á×¾ú¾î!" ¶ó°í ¹æ¼Û
+        // ë‚˜ë¥¼ êµ¬ë…í•˜ê³  ìˆëŠ” ëª¨ë“  ì‹œìŠ¤í…œì—ê²Œ "ë‚˜ ì£½ì—ˆì–´!" ë¼ê³  ë°©ì†¡
         OnDie?.Invoke();
 
-        // ¿ÀºêÁ§Æ® Ç®¸µÀ» À§ÇØ Destroy ´ë½Å ºñÈ°¼ºÈ­¸¦ ±ÇÀå
+        // ì˜¤ë¸Œì íŠ¸ í’€ë§ì„ ìœ„í•´ Destroy ëŒ€ì‹  ë¹„í™œì„±í™”ë¥¼ ê¶Œì¥
         gameObject.SetActive(false);
+    }
+
+        // EntityCore.csì˜ OnCollisionEnter2D ìˆ˜ì •
+    private void OnCollisionEnter2D(Collision2D collision)
+    {
+        // ì´ ì—”í‹°í‹°ê°€ ì ‘ì´‰ ë°ë¯¸ì§€ë¥¼ ê°€ì§€ê³  ìˆì§€ ì•Šë‹¤ë©´, ì•„ë¬´ ì¼ë„ í•˜ì§€ ì•Šê³  ì¦‰ì‹œ ì¢…ë£Œ.
+        if (!Data.hasContactDamage) return;
+    
+        if (collision.gameObject.TryGetComponent<EntityCore>(out var otherCore))
+        {
+            // ... (ìê¸° ìì‹ , ê°™ì€ í¸ ì²´í¬) ...
+    
+            // ìƒëŒ€ë°©ì—ê²Œ ë‚˜ì˜ 'contactDamage'ë¥¼ ì…í™ë‹ˆë‹¤.
+            otherCore.TakeDamage(this.Data.contactDamage);
+        }
     }
 }

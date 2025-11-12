@@ -1,23 +1,38 @@
 // EntityData.cs
 using UnityEngine;
-using System.Collections.Generic; // List¸¦ »ç¿ëÇÏ±â À§ÇÔ
+using System.Collections.Generic; // Listë¥¼ ì‚¬ìš©í•˜ê¸° ìœ„í•¨
 
-// ÀÌ ¸Ş´º¸¦ ÅëÇØ Unity ¿¡µğÅÍ¿¡¼­ ½±°Ô ¿¡¼Â ÆÄÀÏÀ» »ı¼ºÇÒ ¼ö ÀÖ½À´Ï´Ù.
+// ì´ ë©”ë‰´ë¥¼ í†µí•´ Unity ì—ë””í„°ì—ì„œ ì‰½ê²Œ ì—ì…‹ íŒŒì¼ì„ ìƒì„±í•  ìˆ˜ ìˆìŠµë‹ˆë‹¤.
 [CreateAssetMenu(fileName = "New EntityData", menuName = "Entity/Entity Data")]
 public class EntityData : ScriptableObject
 {
-    [Header("±âº» Á¤º¸")]
-    public string entityName = "»õ ¿£Æ¼Æ¼";
+    [Header("ê¸°ë³¸ ì •ë³´")]
+    public string entityName = "ìƒˆ ì—”í‹°í‹°";
     public Faction factionType = Faction.Green;
 
-    [Header("ÇÙ½É ½ºÅÈ")]
+    [Header("ì£¼ ìŠ¤íƒ¯")]
     public float maxHealth = 100f;
     public float moveSpeed = 3f;
 
-    [Header("»ó¼º °ü°è")]
-    [Tooltip("ÀÌ ¿£Æ¼Æ¼°¡ ÃµÀûÀ¸·Î ÀÎ½ÄÇÏ´Â ÆÑ¼Ç ¸ñ·Ï")]
+    [Header("ì ‘ì´‰ ê³µê²© ìŠ¤íƒ¯")]
+    public bool hasContactDamage = false;   // ì ‘ì´‰ ë°ë¯¸ì§€ê°€ ìˆëŠ”ê°€?
+    public float contactDamage = 0f;        // ìˆë‹¤ë©´, ë°ë¯¸ì§€ëŠ” ì–¼ë§ˆì¸ê°€?
+
+    [Header("ê·¼ì ‘ ê³µê²© ìŠ¤íƒ¯")]
+    public bool hasMeleeAttack = false;      // ê·¼ì ‘ ê³µê²©(AttackState)ì„ ì‚¬ìš©í•˜ëŠ”ê°€?
+    public float meleeDamage = 0f;         // ì‚¬ìš©í•œë‹¤ë©´, ë°ë¯¸ì§€ëŠ” ì–¼ë§ˆì¸ê°€?
+    public float meleeRange = 1f;     // ê³µê²© ì‚¬ê±°ë¦¬
+    public float meleeCooldown = 2.0f;  // ê³µê²© ì¿¨íƒ€ì„ (2ì´ˆì— í•œ ë²ˆ)
+
+    [Header("ê³ ê¸‰ ê³µê²© ì „ëµ")]
+    [Tooltip("ì—¬ê¸°ì— ê³µê²© ì „ëµ ì—ì…‹ì„ í• ë‹¹í•˜ë©´, ê¸°ë³¸ ê·¼ì ‘/ì›ê±°ë¦¬ ê³µê²© ëŒ€ì‹  ì´ ì „ëµì„ ì‚¬ìš©í•©ë‹ˆë‹¤.")]
+    public IAttackStrategy attackStrategy;
+
+    [Header("ìƒì„± ê´€ê³„")]
+    [Tooltip("ì´ ì—”í‹°í‹°ê°€ ì²œì ìœ¼ë¡œ ì¸ì‹í•˜ëŠ” íŒ©ì…˜ ëª©ë¡")]
     public List<Faction> predatorFactions = new List<Faction>();
 
-    [Tooltip("ÀÌ ¿£Æ¼Æ¼°¡ ¸ÔÀÌ·Î ÀÎ½ÄÇÏ´Â ÆÑ¼Ç ¸ñ·Ï")]
+    [Tooltip("ì´ ì—”í‹°í‹°ê°€ ë¨¹ì´ë¡œ ì¸ì‹í•˜ëŠ” íŒ©ì…˜ ëª©ë¡")]
     public List<Faction> preyFactions = new List<Faction>();
+
 }
