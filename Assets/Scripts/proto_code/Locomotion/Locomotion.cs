@@ -1,33 +1,36 @@
-// 파일 이름: Locomotion.cs (올바른 수정안)
+// 파일 이름: Locomotion.cs
 
 using UnityEngine;
 
-[RequireComponent(typeof(Rigidbody2D))]
-public abstract class Locomotion : MonoBehaviour, ITickable
+[RequireComponent(typeof(Rigidbody2D), typeof(EntityCore))]
+public abstract class Locomotion : MonoBehaviour
 {
     protected Rigidbody2D rb;
     protected EntityCore entityCore;
+    protected Vector2 moveDirection; // 모든 자식들이 공유해서 쓸 이동 방향
 
     protected virtual void Awake()
     {
         rb = GetComponent<Rigidbody2D>();
         entityCore = GetComponent<EntityCore>();
-        if (entityCore == null) Debug.LogError("...", this);
+        if (entityCore == null)
+            Debug.LogError($"{gameObject.name}의 Locomotion 컴포넌트가 EntityCore를 찾을 수 없습니다.", this);
     }
 
-    protected virtual void OnEnable()
+    private void FixedUpdate()
     {
-        TickManager.Instance.Register(this);
+        Move();
     }
 
-    /// <summary>
-    /// 모든 자식 이동 클래스가 구현해야 할 틱 기반 업데이트 로직입니다.
-    /// </summary>
-    public abstract void OnTick();
+    protected abstract void Move();
 
     /// <summary>
-    /// 외부(EntityAction, PlayerMediator 등)에서 호출하여 이번 틱에 적용될 이동 방향을 설정합니다.
-    /// 모든 자식 클래스가 이 명령을 이해하고 처리할 수 있도록 추상 메서드로 선언합니다.
+    /// 외부에서 이동 방향을 설정합니다.
+    /// virtual로 선언하여, 대부분의 자식 클래스는 이 메서드를 수정할 필요 없이 그대로 사용하고,
+    /// 특별한 처리가 필요한 클래스만 override하여 재정의할 수 있습니다.
     /// </summary>
-    public abstract void SetMoveDirection(Vector2 direction);
+    public virtual void SetMoveDirection(Vector2 direction)
+    {
+        this.moveDirection = direction.normalized; // 방향 벡터는 정규화해서 저장하는 것이 안전하다.
+    }
 }

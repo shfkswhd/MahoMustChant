@@ -2,25 +2,16 @@
 
 using UnityEngine;
 
-// 상속 대상을 NonPlayerMovement로 변경합니다.
 public class GroundMovement : NonPlayerMovement
 {
-    private Vector2 targetMoveDirection;
+    // SetMoveDirection 메서드는 부모(Locomotion)의 것을 그대로 사용하므로,
+    // 이 클래스에서 재정의(override)할 필요가 없다. 코드가 훨씬 깔끔해진다.
 
-    public override void SetMoveDirection(Vector2 direction)
+    protected override void Move()
     {
-        targetMoveDirection = direction;
-    }
-
-    public override void OnTick()
-    {
-        // 부모의 보간 변수를 사용합니다.
-        previousPosition = rb.position;
-
+        // 예전 코드의 로직과 동일하다.
+        // 부모로부터 물려받은 moveDirection 변수를 사용하여 속도를 설정한다.
         float targetSpeed = entityCore.Data.moveSpeed;
-        rb.linearVelocity = new Vector2(targetMoveDirection.x * targetSpeed, rb.linearVelocity.y);
-        
-        // 부모의 보간 변수를 사용합니다.
-        currentPosition = rb.position + rb.linearVelocity * Time.fixedDeltaTime;
+        rb.linearVelocity = new Vector2(moveDirection.x * targetSpeed, rb.linearVelocity.y);
     }
 }

@@ -1,56 +1,50 @@
-// 파일 이름: TickManager.cs (FixedUpdate 최종 완성 버전)
+// 파일 이름: TickManager.cs
 
 using UnityEngine;
 using System.Collections.Generic;
 
+/// <summary>
+/// 게임의 모든 틱 기반 로직을 총괄하는 중앙 관리자입니다.
+/// 자동 생성 싱글톤이며, 등록된 모든 ITickable 객체의 생명주기와 실행 주기를 관리합니다.
+/// </summary>
 public class TickManager : MonoBehaviour
 {
-    // --- 싱글톤 ---
+    #region Singleton
     private static TickManager _instance;
     private static bool applicationIsQuitting = false;
     public static bool IsQuitting => applicationIsQuitting;
+
     public static TickManager Instance
     {
         get
         {
-            // 게임이 종료되는 중이라면, 아무것도 찾거나 만들지 말고 그냥 null을 반환한다.
-            if (applicationIsQuitting)
-            {
-                return null;
-            }
-
-            // _instance가 비어있는지(null) 확인한다.
+            if (applicationIsQuitting) return null;
             if (_instance == null)
             {
-                // 씬에 이미 TickManager 타입의 오브젝트가 있는지 찾아본다. (가장 빠른 방식)
                 _instance = FindAnyObjectByType<TickManager>();
-
-                // 찾아봤는데도 없다면, 직접 만들어서 씬에 추가한다.
                 if (_instance == null)
                 {
-                    // "@TickManager (Auto-Generated)" 라는 이름의 새 게임 오브젝트를 생성한다.
                     GameObject singletonObject = new GameObject($"@{nameof(TickManager)} (Auto-Generated)");
-                    // 생성된 오브젝트에 TickManager 컴포넌트를 붙인다.
                     _instance = singletonObject.AddComponent<TickManager>();
                 }
             }
-            // 최종적으로 찾거나, 새로 만든 _instance를 반환한다.
             return _instance;
         }
     }
+    #endregion
 
-    // --- 틱 설정 ---
     [Header("Tick Settings")]
-    [Tooltip("초당 실행될 물리 틱의 횟수 (Ticks Per Second)")]
+    [Tooltip("초당 실행될 틱의 횟수 (Ticks Per Second)")]
     [Range(1, 120)]
-    public int tickRate = 50; // 정수로 변경
-
-    // TickInterval은 이제 Time.fixedDeltaTime을 통해 관리되므로, public 프로퍼티는 없어도 된다.
+    public ushort tickRate = 20;
+    public float TickIntervalSeconds { get; private set; }
 
     // --- 내부 변수 ---
-    private List<ITickable> tickables = new List<ITickable>();
+    private readonly List<ITickable> tickables = new List<ITickable>();
+    private float accumulator = 0f;
+    private ulong currentTickCount = 0; // 전체 틱 카운트 (ulong으로 오버플로우 방지)
 
-    // --- Unity 생명주기 메서드 ---
+    #region Unity Lifecycle
     private void Awake()
     {
         if (_instance != null && _instance != this)
@@ -60,7 +54,7 @@ public class TickManager : MonoBehaviour
         }
         _instance = this;
         DontDestroyOnLoad(gameObject);
-        ApplyTickSettings(); // Awake에서 호출
+        UpdateTickInterval();
     }
 
     private void OnDestroy()
@@ -71,41 +65,60 @@ public class TickManager : MonoBehaviour
 
     private void OnValidate()
     {
-        ApplyTickSettings(); // OnValidate에서 호출
+        UpdateTickInterval();
     }
 
-    /// <summary>
-    /// Unity의 물리 업데이트 주기에 맞춰 고정적으로 호출됩니다.
-    /// 이것이 우리 시스템의 새로운 '심장 박동기'입니다.
-    /// </summary>
-    private void FixedUpdate()
+    private void Update()
     {
-        // 리스트를 순회하며 죽은 객체를 정리하고, 살아있는 객체의 'OnTick()'을 호출합니다.
+        accumulator += Time.deltaTime;
+        while (accumulator >= TickIntervalSeconds)
+        {
+            accumulator -= TickIntervalSeconds;
+            BroadcastTick(); // 틱 실행
+        }
+    }
+    #endregion
+
+    /// <summary>
+    /// 한 번의 틱을 실행하고, 등록된 모든 객체의 주기를 검사하며, 파괴된 객체를 정리합니다.
+    /// </summary>
+    private void BroadcastTick()
+    {
+        currentTickCount++; // 전체 틱 카운트 증가
+
+        // 리스트를 뒤에서부터 순회하여 삭제 시 인덱스 문제를 방지합니다.
         for (int i = tickables.Count - 1; i >= 0; i--)
         {
-            if (tickables[i] == null)
+            ITickable tickable = tickables[i];
+
+            // 1. 안전한 생명주기 관리: 객체가 파괴되었는지(null) 확인합니다.
+            if (tickable == null)
             {
                 tickables.RemoveAt(i);
                 continue;
             }
-            tickables[i].OnTick(); // <-- '약속'된 OnTick()을 호출!
+
+            // 2. 주기 검사: 현재 틱 카운트를 객체의 TickInterval로 나눈 나머지가 0인지 확인합니다.
+            //    (TickInterval이 0인 경우는 없도록 uint로 방지했지만, 만일을 대비해 체크)
+            if (tickable.TickInterval > 0 && currentTickCount % tickable.TickInterval == 0)
+            {
+                // 3. 주기가 도래한 객체의 OnTick()만 호출합니다.
+                tickable.OnTick();
+            }
         }
     }
 
-    // --- 설정 적용 ---
-    private void ApplyTickSettings()
+    private void UpdateTickInterval()
     {
-        if (tickRate > 0)
-        {
-            // Unity의 물리 시간 단위를 우리의 tickRate에 맞춰 설정합니다.
-            Time.fixedDeltaTime = 1.0f / tickRate;
-        }
+        if (tickRate > 0) TickIntervalSeconds = 1.0f / tickRate;
     }
 
-    // --- Public API ---
+    /// <summary>
+    /// 틱 시스템에 객체를 등록합니다.
+    /// </summary>
     public void Register(ITickable tickable)
     {
-        if (!tickables.Contains(tickable))
+        if (tickable != null && !tickables.Contains(tickable))
         {
             tickables.Add(tickable);
         }

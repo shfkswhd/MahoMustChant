@@ -1,14 +1,20 @@
 // 파일 이름: ITickable.cs
 
 /// <summary>
-/// 틱 기반 시스템에 등록되어 주기적인 로직 업데이트를 수신할 수 있는 모든 객체를 위한 인터페이스입니다.
-/// 이 인터페이스를 구현하는 클래스는 반드시 OnTick() 메서드를 가져야 합니다.
+/// TickManager에 의해 관리되는 모든 틱 기반 객체가 구현해야 할 인터페이스입니다.
+/// 객체 스스로 자신의 실행 주기를 정의해야 합니다.
 /// </summary>
 public interface ITickable
 {
     /// <summary>
-    /// TickManager에 의해 고정된 시간 간격(FixedUpdate 주기)마다 호출되는 메서드입니다.
-    /// 모든 시뮬레이션 관련 핵심 로직은 이 메서드 안에 구현되어야 합니다.
+    /// 이 객체의 OnTick() 메서드가 호출될 주기입니다. (단위: 틱)
+    /// 1 = 매 틱마다 실행됩니다.
+    /// 10 = 10틱마다 한 번씩 실행됩니다.
+    /// </summary>
+    uint TickInterval { get; }
+
+    /// <summary>
+    /// TickInterval 주기가 도래했을 때 TickManager에 의해 호출될 메서드입니다.
     /// </summary>
     void OnTick();
 }

@@ -1,18 +1,23 @@
-// 파일 이름: PlayerMediator.cs (최종 수정)
+// 파일 이름: PlayerMediator.cs
 
 using UnityEngine;
 
 [RequireComponent(typeof(PlayerInput), typeof(PlayerMovement), typeof(EntityAction))]
 public class PlayerMediator : MonoBehaviour, ITickable
 {
+    [Header("Player Logic Tick Interval")]
+    [SerializeField][Range(1, 10)] private uint tickInterval = 1; // 플레이어 입력은 매 틱마다 처리
+
+    public uint TickInterval => tickInterval;
+
     private PlayerInput playerInput;
-    private PlayerMovement playerMovement; // 이제 Locomotion이 아니라 구체적인 PlayerMovement를 참조한다.
+    private PlayerMovement playerMovement;
     private EntityAction entityAction;
 
     private void Awake()
     {
         playerInput = GetComponent<PlayerInput>();
-        playerMovement = GetComponent<PlayerMovement>(); // 자식 클래스를 직접 참조
+        playerMovement = GetComponent<PlayerMovement>();
         entityAction = GetComponent<EntityAction>();
     }
 
@@ -25,35 +30,35 @@ public class PlayerMediator : MonoBehaviour, ITickable
 
     private void OnDisable()
     {
-        playerInput.OnJumpInput -= HandleJump;
-        playerInput.OnAttackInput -= HandleAttack;
+        // TickManager는 자동 처리. 이벤트 해지만 남긴다.
+        if (playerInput != null)
+        {
+            playerInput.OnJumpInput -= HandleJump;
+            playerInput.OnAttackInput -= HandleAttack;
+        }
     }
 
+    /// <summary>
+    /// TickManager가 호출하는 '논리' 업데이트.
+    /// 여기서 결정된 사항이 다음 '물리' 업데이트(FixedUpdate)에 반영된다.
+    /// </summary>
     public void OnTick()
     {
-        // 1. 이동에 대한 '의도'를 읽어온다.
         float moveX = playerInput.MoveInputX;
         bool isWalking = playerInput.IsWalking;
-        bool isCrouching = playerInput.IsCrouching;
-        Vector2 moveDirection = new Vector2(moveX, 0);
 
-        // 2. 이동 전문가(PlayerMovement)에게 '의도'를 전달한다.
-        //    "이런 입력이 들어왔으니, 네가 알아서 처리해."
-        playerMovement.SetInputs(moveDirection, isWalking, isCrouching);
+        // 이동 '명령'을 PlayerMovement에 전달한다.
+        playerMovement.SetInputs(new Vector2(moveX, 0), isWalking);
     }
 
     private void HandleJump()
     {
-        // 점프 입력이 들어왔다는 '편지'를 받았다.
-        // 나는 점프하는 방법을 모른다. 그냥 이동 전문가에게 "점프하래!" 라고 전달만 한다.
+        // 점프는 즉각적인 반응이 중요하므로, 틱을 기다리지 않고 바로 명령한다.
         playerMovement.Jump();
     }
 
     private void HandleAttack()
     {
-        Debug.Log("Attack input received!");
-        // entityAction.Attack() -> entityAction.Attack(null) 로 변경
-        // "타겟은 없지만, 일단 공격하라는 신호는 보낼게" 라는 의미다.
         entityAction.Attack(null);
     }
 }
