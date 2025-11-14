@@ -10,6 +10,7 @@ public class EntitySense : MonoBehaviour
     [SerializeField] private LayerMask targetLayer;      // 감지할 대상의 레이어
 
     private EntityCore myCore;
+    public float DetectionRadius => detectionRadius; // 기즈모용 읽기 전용 프로퍼티
 
     private void Awake()
     {

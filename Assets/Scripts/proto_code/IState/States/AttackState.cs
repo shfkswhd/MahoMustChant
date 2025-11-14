@@ -6,7 +6,7 @@ public class AttackState : IState
 {
     private EntityBrain brain;
     private EntityCore target;
-
+    public EntityCore Target => target;
     public AttackState(EntityCore target)
     {
         this.target = target;
@@ -16,6 +16,7 @@ public class AttackState : IState
     {
         this.brain = brain;
     }
+
 
     public AIIntent OnTick(out EntityCore outTarget, out Vector2 outDirection)
     {
@@ -35,6 +36,8 @@ public class AttackState : IState
         outTarget = this.target;
         return AIIntent.Attack;
     }
+
+
 
     public void OnExit() { }
 }

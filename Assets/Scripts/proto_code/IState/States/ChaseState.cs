@@ -6,6 +6,7 @@ public class ChaseState : IState
 {
     private EntityBrain brain;
     private EntityCore target;
+    public EntityCore Target => target;
 
     public void OnEnter(EntityBrain brain)
     {
@@ -13,6 +14,7 @@ public class ChaseState : IState
         if (brain.Core.Data.preyFactions.Count > 0)
             this.target = brain.Sense.FindClosestTargetByFaction(brain.Core.Data.preyFactions[0]);
     }
+
 
     public AIIntent OnTick(out EntityCore outTarget, out Vector2 outDirection)
     {

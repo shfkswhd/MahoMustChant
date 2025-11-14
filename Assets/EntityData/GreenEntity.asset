@@ -23,4 +23,4 @@ MonoBehaviour:
   meleeRange: 1
   meleeCooldown: 2
   predatorFactions: 02000000
-  preyFactions: 03000000
+  preyFactions: 0000000003000000
